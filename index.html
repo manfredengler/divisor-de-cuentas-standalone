@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Divisor de Cuentas</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root {
+            --pico-primary: #3b82f6;
+            --pico-primary-background: #3b82f6;
+            --pico-primary-hover: #2563eb;
+            --pico-primary-hover-background: #2563eb;
+        }
+        /* Modern Title & Share Button */
+        .app-header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .main-title {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--pico-primary) 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .subtitle {
+            font-weight: 500;
+            color: var(--pico-muted-color);
+            letter-spacing: 0.5px;
+        }
+        .share-btn {
+            background: linear-gradient(135deg, #2563eb, #3b82f6, #0ea5e9);
+            background-size: 200% 200%;
+            animation: gradient-shift 5s ease infinite;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.6rem 1.5rem;
+            border-radius: 9999px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s;
+            width: auto;
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .share-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            filter: brightness(1.1);
+        }
+        .share-btn:active {
+            transform: scale(0.95);
+        }
+        
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Ambient Aurora Effects (2026 Style) */
+        body {
+            transition: background 0.5s ease-in-out;
+        }
+        body.aurora-active {
+            /* Subtle modern gradients, light for mobile performance */
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 40%);
+            background-attachment: fixed;
+            background-color: var(--pico-background-color);
+        }
+        
+        /* Sparkles for Aurora */
+        body.aurora-active::before, body.aurora-active::after {
+            content: '';
+            position: fixed;
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 0 10px #fff;
+            animation: twinkle 4s infinite ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+        body.aurora-active::before { top: 20%; left: 30%; animation-delay: 0s; }
+        body.aurora-active::after { top: 70%; right: 20%; animation-delay: 2s; }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 0.8; transform: scale(1.5); }
+        }
+
+        /* Banner styles */
+        .ai-banner {
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .ai-banner.ai-active {
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            color: var(--pico-h2-color);
+        }
+        .ai-banner.ai-warning {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--pico-h2-color);
+        }
+
+        .scan-action-btn {
+            background: linear-gradient(to right, #0ea5e9, #0284c7);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            transition: filter 0.2s;
+            margin-bottom: 0.5rem;
+        }
+        .scan-action-btn:hover { filter: brightness(1.1); }
+        .scan-action-btn.processing {
+            background: #6b7280;
+            cursor: wait;
+        }
+
+        /* Layout responsiveness per EARS specs */
+        @media (min-width: 768px) { .mobile-only { display: none !important; } }
+        @media (max-width: 767px) { .desktop-only { display: none !important; } }
+        
+        .chip {
+            display: inline-block; 
+            padding: 0.25rem 0.75rem; 
+            margin: 0.2rem;
+            font-size: 0.875rem; 
+            border-radius: 9999px; 
+            cursor: pointer;
+            border: 1px solid var(--pico-primary-background); 
+            user-select: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .chip.active { 
+            background-color: var(--pico-primary-background); 
+            color: var(--pico-primary-inverse); 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .chip.inactive { 
+            background-color: transparent; 
+            color: var(--pico-primary-background); 
+        }
+        mark.warning { 
+            background-color: #ffc107; 
+            color: #000; 
+            display: block; 
+            padding: 1rem; 
+            border-radius: 0.75rem; 
+            margin-bottom: 1rem; 
+        }
+        .delete-btn { 
+            color: var(--pico-del-color); 
+            cursor: pointer; 
+            border: none; 
+            background: transparent; 
+            padding: 0;
+            font-size: 1.25rem;
+            transition: transform 0.2s;
+        }
+        .delete-btn:hover { transform: scale(1.2); }
+        .table-overflow { overflow-x: auto; }
+        
+        .settings-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .switches-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            padding: 0;
+            border: none;
+        }
+        .switches-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            padding: 0.5rem 1rem 0.5rem 0.75rem;
+            background: rgba(128, 128, 128, 0.08);
+            border: 1px solid var(--pico-muted-border-color);
+            border-radius: 9999px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+        body[data-theme="dark"] .switches-group label {
+            background: rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .switches-group label:hover {
+            border-color: var(--pico-primary);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+        }
+        .switches-group input[type="checkbox"][role="switch"] {
+            margin: 0 !important;
+        }
+        
+        /* Modern Forms & Inputs */
+        fieldset[role="group"] {
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s ease;
+        }
+        fieldset[role="group"]:focus-within {
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        }
+        fieldset[role="group"] input {
+            border-top-left-radius: 0.75rem !important;
+            border-bottom-left-radius: 0.75rem !important;
+            transition: all 0.2s ease;
+        }
+        fieldset[role="group"] button[type="submit"] {
+            border-top-right-radius: 0.75rem !important;
+            border-bottom-right-radius: 0.75rem !important;
+        }
+        fieldset[role="group"] input + input {
+            border-radius: 0 !important;
+        }
+        
+        button[type="submit"] {
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--pico-primary) 0%, rgba(59, 130, 246, 0.8) 100%);
+            border: none;
+            transition: background 0.2s, filter 0.2s, opacity 0.2s;
+        }
+        button[type="submit"]:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Modern Standalone Inputs */
+        input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select {
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+            border-color: var(--pico-primary);
+        }
+        
+        /* Modern Switches */
+        input[type="checkbox"][role="switch"] {
+            cursor: pointer;
+            border-radius: 9999px;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.2s ease;
+        }
+        input[type="checkbox"][role="switch"]:checked {
+            background-color: var(--pico-primary);
+            border-color: var(--pico-primary);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+        input[type="checkbox"][role="switch"]:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Modern Cards */
+        article {
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid var(--pico-muted-border-color);
+        }
+        
+        body[data-theme="dark"] article {
+            background: rgba(25, 29, 36, 0.7) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        body[data-theme="dark"] table.striped tbody tr:nth-child(even) {
+            background-color: rgba(255,255,255,0.02);
+        }
+    </style>
+</head>
+<body class="aurora-active">
+    <main class="container" x-data="billSplitter">
+        <header class="app-header">
+            <div>
+                <h1 class="main-title">Divisor de Cuentas</h1>
+                <div class="subtitle">Calculadora grupal standalone</div>
+            </div>
+            <button class="share-btn" @click="compartirEnlace()">
+                ✨ <span x-text="shareText"></span>
+            </button>
+        </header>
+
+        <!-- Gemini Nano Banner -->
+        <template x-if="bannerMessage">
+            <div class="ai-banner" :class="canUseAI ? 'ai-active' : 'ai-warning'">
+                <div><span x-text="bannerMessage"></span></div>
+                <template x-if="isChrome && !canUseAI">
+                    <a href="chrome://flags/#prompt-api-for-gemini-nano" target="_blank" style="font-weight:bold; color: var(--pico-primary);">Activar en Flags</a>
+                </template>
+            </div>
+        </template>
+        
+        <section>
+            <div class="settings-grid">
+                <label style="max-width: 200px;">
+                    Moneda
+                    <select x-model="moneda">
+                        <option value="$">$ (ARS/USD/CLP)</option>
+                        <option value="€">€ (EUR)</option>
+                        <option value="£">£ (GBP)</option>
+                    </select>
+                </label>
+                
+                <fieldset class="switches-group">
+                    <label>
+                        <input type="checkbox" role="switch" x-model="decimales" />
+                        <span>🔢 Decimales</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" role="switch" x-model="darkMode" />
+                        <span x-text="darkMode ? '🌙 Oscuro' : '☀️ Claro'"></span>
+                    </label>
+                    <label>
+                        <input type="checkbox" role="switch" x-model="auroraTheme" />
+                        <span>✨ Aurora</span>
+                    </label>
+                </fieldset>
+            </div>
+        </section>
+
+        <hr />
+
+        <div class="grid">
+            <!-- Personas -->
+            <article>
+                <header><strong>👥 Participantes</strong></header>
+                <form @submit.prevent="addPersona">
+                    <fieldset role="group" style="display: flex;">
+                        <input type="text" x-model="nuevoNombre" placeholder="Nombre (Ej: Ana)" required style="flex: 1; min-width: 120px;" />
+                        <button type="submit" style="flex-shrink: 0; white-space: nowrap; padding-left: 1.25rem; padding-right: 1.25rem;">Añadir</button>
+                    </fieldset>
+                </form>
+                <div class="table-overflow">
+                    <table class="striped">
+                        <thead><tr><th>Nombre</th><th>Ya pagó al local</th><th></th></tr></thead>
+                        <tbody>
+                            <template x-for="p in personas" :key="p.id">
+                                <tr>
+                                    <td x-text="p.nombre"></td>
+                                    <td>
+                                        <input type="number" step="any" min="0" x-model="p.pagado" style="margin:0; min-width: 90px;" />
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <button class="delete-btn" @click="removePersona(p.id)" title="Eliminar">✖</button>
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-if="personas.length === 0">
+                                <tr><td colspan="3" style="text-align:center; color: var(--pico-muted-color);">No hay personas registradas</td></tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <!-- Ítems -->
+            <article>
+                <header>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <strong>🍔 Artículos Consumidos</strong>
+                        <template x-if="isChrome">
+                            <label class="scan-action-btn" :class="{'processing': isScanning}">
+                                <input type="file" accept="image/*" @change="scanReceipt" style="display:none;" :disabled="isScanning"/>
+                                <span x-text="isScanning ? '⏳ Procesando...' : '📸 Escanear Boleta'"></span>
+                            </label>
+                        </template>
+                    </div>
+                </header>
+                <form @submit.prevent="addItem">
+                    <fieldset role="group" style="display: flex;">
+                        <input type="text" x-model="nuevoItemNombre" placeholder="Ítem (Ej: Pizza)" required style="flex: 2; min-width: 100px;" />
+                        <input type="number" step="any" min="0" x-model="nuevoItemPrecio" placeholder="Precio" required style="flex: 1; min-width: 80px;" />
+                        <button type="submit" style="flex-shrink: 0; white-space: nowrap; padding-left: 1.25rem; padding-right: 1.25rem;">Añadir</button>
+                    </fieldset>
+                </form>
+                <div class="table-overflow">
+                    <table class="striped">
+                        <thead><tr><th>Producto</th><th>Precio</th><th></th></tr></thead>
+                        <tbody>
+                            <template x-for="item in items" :key="item.id">
+                                <tr>
+                                    <td x-text="item.nombre"></td>
+                                    <td x-text="fmt(item.precio)"></td>
+                                    <td style="text-align: right;">
+                                        <button class="delete-btn" @click="removeItem(item.id)" title="Eliminar">✖</button>
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-if="items.length === 0">
+                                <tr><td colspan="3" style="text-align:center; color: var(--pico-muted-color);">No hay ítems registrados</td></tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </div>
+
+        <!-- Asignación Matrix -->
+        <article x-show="personas.length > 0 && items.length > 0" style="margin-top: 2rem;">
+            <header><strong>🎯 Asignación de Consumos</strong></header>
+            
+            <div class="desktop-only table-overflow">
+                <table class="striped">
+                    <thead>
+                        <tr>
+                            <th>Ítem</th>
+                            <template x-for="p in personas" :key="p.id">
+                                <th x-text="p.nombre" style="text-align:center;"></th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="item in items" :key="item.id">
+                            <tr>
+                                <td>
+                                    <div x-text="item.nombre" style="font-weight: 600;"></div>
+                                    <small x-text="fmt(item.precio)"></small>
+                                </td>
+                                <template x-for="p in personas" :key="p.id">
+                                    <td style="text-align:center; vertical-align: middle;">
+                                        <input type="checkbox" :checked="item.asignados.includes(p.id)" @change="toggleAsignacion(item.id, p.id)" />
+                                    </td>
+                                </template>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mobile-only">
+                <template x-for="item in items" :key="item.id">
+                    <div style="margin-bottom: 1rem; border-bottom: 1px solid var(--pico-muted-border-color); padding-bottom: 1rem;">
+                        <strong><span x-text="item.nombre"></span> (<span x-text="fmt(item.precio)"></span>)</strong>
+                        <div style="margin-top: 0.5rem;">
+                            <template x-for="p in personas" :key="p.id">
+                                <span class="chip" 
+                                      :class="item.asignados.includes(p.id) ? 'active' : 'inactive'" 
+                                      @click="toggleAsignacion(item.id, p.id)" 
+                                      x-text="p.nombre">
+                                </span>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </article>
+
+        <section class="grid" x-show="personas.length > 0 && items.length > 0">
+            <article>
+                <header><strong>💸 Propina y Cargos Extra</strong></header>
+                <div class="grid">
+                    <label>
+                        Propina (Porcentaje %)
+                        <input type="number" step="any" min="0" x-model="propinaPorcentaje" />
+                    </label>
+                    <label>
+                        Cargos fijos (Envío, servicio, etc.)
+                        <input type="number" step="any" min="0" x-model="cargosFijos" />
+                    </label>
+                </div>
+            </article>
+        </section>
+
+        <!-- Resultados -->
+        <article x-show="personas.length > 0 && items.length > 0">
+            <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <strong>📊 Resumen y Liquidación</strong>
+                <button class="secondary outline" @click="descargarExcel()" style="width: auto; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; margin-bottom: 0; background: transparent;">
+                    📥 Descargar Excel
+                </button>
+            </header>
+            
+            <template x-if="alertaSaldoPendiente">
+                <mark class="warning">
+                    ⚠️ Hay un saldo pendiente de asignación de <strong><span x-text="fmt(montoPendiente)"></span></strong>.<br/>
+                    <small>Ítems sin asignar: <em x-text="nombresPendientes"></em>.</small>
+                </mark>
+            </template>
+
+            <div class="table-overflow">
+                <table class="striped">
+                    <thead>
+                        <tr>
+                            <th>Participante</th>
+                            <th>Subtotal</th>
+                            <th>+ Propinas</th>
+                            <th>+ Fijos</th>
+                            <th>Total a Pagar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="p in personas" :key="p.id">
+                            <tr>
+                                <td>
+                                    <strong x-text="p.nombre"></strong><br>
+                                    <small>Ya pagó: <span x-text="fmt(p.pagado)"></span></small>
+                                </td>
+                                <td x-text="fmt(calculos[p.id]?.subtotal || 0)"></td>
+                                <td x-text="fmt(calculos[p.id]?.propina || 0)"></td>
+                                <td x-text="fmt(calculos[p.id]?.fijos || 0)"></td>
+                                <td>
+                                    <strong><span x-text="fmt(calculos[p.id]?.total || 0)"></span></strong>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <h4 style="margin-bottom:0.25rem;">🤝 Liquidación de Deudas</h4>
+                <p style="color: var(--pico-muted-color); font-size: 0.9em;">
+                    Transacciones calculadas para saldar la cuenta equitativamente.
+                </p>
+                <template x-if="transferencias.length === 0 && !alertaSaldoPendiente">
+                    <p style="color: var(--pico-ins-color); font-weight: bold;">
+                        ¡Perfecto! Todas las cuentas están saldadas.
+                    </p>
+                </template>
+                <ul style="list-style-type: none; padding-left: 0;">
+                    <template x-for="(trans, index) in transferencias" :key="index">
+                        <li style="padding: 1rem; background: var(--pico-form-element-background-color); margin-bottom: 0.5rem; border-radius: 0.75rem; border: 1px solid var(--pico-muted-border-color);">
+                            💳 <strong x-text="trans.from" style="color: var(--pico-del-color);"></strong> transfiere 
+                            <strong><span x-text="fmt(trans.amount)"></span></strong> a 
+                            <strong x-text="trans.to" style="color: var(--pico-ins-color);"></strong>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </article>
+    </main>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('billSplitter', () => ({
+                moneda: '$',
+                decimales: false,
+                darkMode: true,
+                auroraTheme: true,
+                personas: [],
+                items: [],
+                propinaPorcentaje: 0,
+                cargosFijos: 0,
+                
+                nextPId: 1,
+                nextIId: 1,
+                nuevoNombre: '',
+                nuevoItemNombre: '',
+                nuevoItemPrecio: null,
+                
+                shareText: 'Compartir URL',
+                alertaSaldoPendiente: false,
+                montoPendiente: 0,
+                nombresPendientes: '',
+                
+                // OCR & AI
+                isChrome: false,
+                canUseAI: false,
+                bannerMessage: '',
+                isScanning: false,
+
+                init() {
+                    this.isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+                    this.canUseAI = !!window.ai;
+                    
+                    if (this.isChrome) {
+                        if (this.canUseAI) {
+                            this.bannerMessage = "✨ Gemini Nano activado: Escaneo inteligente de boletas offline disponible.";
+                        } else {
+                            this.bannerMessage = "💡 Usa Google Chrome con Gemini Nano (window.ai) para escanear boletas offline con Inteligencia Artificial.";
+                        }
+                    }
+
+                    const hash = window.location.hash.substring(1);
+                    if (hash) {
+                        try {
+                            const decoded = decodeURIComponent(atob(hash));
+                            this.loadData(JSON.parse(decoded));
+                            history.replaceState(null, null, ' ');
+                        } catch (e) {
+                            console.error("Error al decodificar la URL", e);
+                        }
+                    } else {
+                        const saved = localStorage.getItem('billSplitterState_v2');
+                        if (saved) {
+                            try { this.loadData(JSON.parse(saved)); } catch (e) {}
+                        }
+                    }
+                    
+                    this.applyTheme();
+                    
+                    // State watchers
+                    this.$watch('darkMode', val => { this.applyTheme(); this.saveData(); });
+                    this.$watch('auroraTheme', val => { this.applyTheme(); this.saveData(); });
+                    this.$watch('moneda', () => this.saveData());
+                    this.$watch('decimales', () => this.saveData());
+                    this.$watch('personas', () => this.saveData(), { deep: true });
+                    this.$watch('items', () => this.saveData(), { deep: true });
+                    this.$watch('propinaPorcentaje', () => this.saveData());
+                    this.$watch('cargosFijos', () => this.saveData());
+                },
+                
+                applyTheme() {
+                    document.documentElement.setAttribute('data-theme', this.darkMode ? 'dark' : 'light');
+                    if (this.auroraTheme) {
+                        document.body.classList.add('aurora-active');
+                    } else {
+                        document.body.classList.remove('aurora-active');
+                    }
+                },
+
+                loadData(data) {
+                    this.moneda = data.moneda || '$';
+                    this.decimales = !!data.decimales;
+                    this.darkMode = data.darkMode !== undefined ? data.darkMode : true;
+                    this.auroraTheme = data.auroraTheme !== undefined ? data.auroraTheme : true;
+                    this.personas = data.personas || [];
+                    this.items = data.items || [];
+                    this.propinaPorcentaje = data.propinaPorcentaje || 0;
+                    this.cargosFijos = data.cargosFijos || 0;
+                    
+                    this.nextPId = this.personas.length ? Math.max(...this.personas.map(p => p.id)) + 1 : 1;
+                    this.nextIId = this.items.length ? Math.max(...this.items.map(i => i.id)) + 1 : 1;
+                },
+                
+                saveData() {
+                    const data = {
+                        moneda: this.moneda, decimales: this.decimales, 
+                        darkMode: this.darkMode, auroraTheme: this.auroraTheme,
+                        personas: this.personas, items: this.items,
+                        propinaPorcentaje: this.propinaPorcentaje, cargosFijos: this.cargosFijos,
+                    };
+                    localStorage.setItem('billSplitterState_v2', JSON.stringify(data));
+                },
+                
+                descargarExcel() {
+                    let csvContent = "\uFEFF"; // BOM para asegurar UTF-8 en Excel
+                    csvContent += "Participante;Subtotal;Propinas;Cargos Fijos;Total a Pagar;Ya pagó;Balance\n";
+                    
+                    const calc = this.calculos;
+                    this.personas.forEach(p => {
+                        const gp = calc[p.id];
+                        if (gp) {
+                            // Convertir puntos a comas para Excel en español si decimales está activo, o evitar conflictos de formato
+                            const fmtNum = n => n.toFixed(2).replace('.', ',');
+                            
+                            csvContent += `${p.nombre};${fmtNum(gp.subtotal)};${fmtNum(gp.propina)};${fmtNum(gp.fijos)};${fmtNum(gp.total)};${fmtNum(gp.pagado)};${fmtNum(gp.balance)}\n`;
+                        }
+                    });
+                    
+                    csvContent += "\nLiquidacion de Deudas\n";
+                    csvContent += "Origen;Destino;Monto\n";
+                    this.transferencias.forEach(t => {
+                        const fmtNum = n => n.toFixed(2).replace('.', ',');
+                        csvContent += `${t.from};${t.to};${fmtNum(t.amount)}\n`;
+                    });
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", "resumen_cuenta.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                },
+
+                compartirEnlace() {
+                    const data = {
+                        moneda: this.moneda, decimales: this.decimales,
+                        darkMode: this.darkMode, auroraTheme: this.auroraTheme,
+                        personas: this.personas, items: this.items,
+                        propinaPorcentaje: this.propinaPorcentaje, cargosFijos: this.cargosFijos
+                    };
+                    const hash = btoa(encodeURIComponent(JSON.stringify(data)));
+                    const url = window.location.origin + window.location.pathname + '#' + hash;
+                    
+                    navigator.clipboard.writeText(url).then(() => {
+                        this.shareText = '¡Copiado!';
+                        setTimeout(() => this.shareText = 'Compartir URL', 2000);
+                    }).catch(() => alert('Enlace generado en hash. Cópialo de la barra de direcciones. URL base64.'));
+                },
+                
+                async loadTesseract() {
+                    if (window.Tesseract) return;
+                    return new Promise((resolve) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                        script.onload = resolve;
+                        document.head.appendChild(script);
+                    });
+                },
+
+                async scanReceipt(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    this.isScanning = true;
+                    try {
+                        // 1. Extraer texto clásico mediante OCR Tesseract local offline
+                        await this.loadTesseract();
+                        const worker = await Tesseract.createWorker('spa');
+                        const { data: { text } } = await worker.recognize(file);
+                        await worker.terminate();
+
+                        // 2. Usar Gemini Nano (si existe) para parsear la data caótica a JSON estructurado
+                        if (this.canUseAI && window.ai && window.ai.languageModel) {
+                            const session = await window.ai.languageModel.create({
+                                systemPrompt: "Extrae de la siguiente boleta OCR los ítems y precios. Responde ÚNICAMENTE con un array JSON válido, ejemplo: [{\"nombre\": \"Pizza\", \"precio\": 1500}]. No uses markdown ni comentarios."
+                            });
+                            
+                            const promptResult = await session.prompt(text);
+                            session.destroy();
+                            
+                            // Limpiar posibles backticks
+                            let cleanJson = promptResult.replace(/```json/gi, '').replace(/```/gi, '').trim();
+                            const parsedItems = JSON.parse(cleanJson);
+                            
+                            parsedItems.forEach(i => {
+                                if (i.nombre && i.precio) {
+                                    this.items.push({
+                                        id: this.nextIId++,
+                                        nombre: i.nombre,
+                                        precio: parseFloat(i.precio),
+                                        asignados: []
+                                    });
+                                }
+                            });
+                        } else {
+                            // Fallback si Nano no está disponible, mostrar el texto para carga manual
+                            alert("Gemini Nano no está activo en chrome://flags. Texto extraído con OCR clásico:\n\n" + text.substring(0,250) + "...");
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert("Hubo un error al leer la boleta: " + e.message);
+                    } finally {
+                        this.isScanning = false;
+                        event.target.value = ''; 
+                    }
+                },
+
+                addPersona() {
+                    if (this.nuevoNombre.trim()) {
+                        this.personas.push({ id: this.nextPId++, nombre: this.nuevoNombre.trim(), pagado: 0 });
+                        this.nuevoNombre = '';
+                    }
+                },
+                removePersona(id) {
+                    this.personas = this.personas.filter(p => p.id !== id);
+                    this.items.forEach(item => item.asignados = item.asignados.filter(pid => pid !== id));
+                },
+                addItem() {
+                    if (this.nuevoItemNombre.trim() && this.nuevoItemPrecio > 0) {
+                        this.items.push({
+                            id: this.nextIId++, nombre: this.nuevoItemNombre.trim(),
+                            precio: parseFloat(this.nuevoItemPrecio), asignados: []
+                        });
+                        this.nuevoItemNombre = '';
+                        this.nuevoItemPrecio = null;
+                        document.querySelector('input[x-model="nuevoItemNombre"]').focus();
+                    }
+                },
+                removeItem(id) { this.items = this.items.filter(i => i.id !== id); },
+                toggleAsignacion(itemId, personaId) {
+                    const item = this.items.find(i => i.id === itemId);
+                    if (item) {
+                        const idx = item.asignados.indexOf(personaId);
+                        if (idx > -1) item.asignados.splice(idx, 1);
+                        else item.asignados.push(personaId);
+                    }
+                },
+                
+                fmt(num) {
+                    let val = Number(num) || 0;
+                    return this.moneda + ' ' + new Intl.NumberFormat('es-AR', {
+                        style: 'decimal',
+                        minimumFractionDigits: this.decimales ? 2 : 0,
+                        maximumFractionDigits: this.decimales ? 2 : 0
+                    }).format(val);
+                },
+                roundValue(val) { return this.decimales ? val : Math.round(val); },
+                
+                get calculos() {
+                    let totalConsumidoAsignado = 0;
+                    let montoPendienteDeAsignar = 0;
+                    let itemNombresPendientes = [];
+                    
+                    const gastos = {};
+                    this.personas.forEach(p => gastos[p.id] = { subtotal: 0, propina: 0, fijos: 0, total: 0, pagado: parseFloat(p.pagado) || 0, balance: 0 });
+                    
+                    this.items.forEach(item => {
+                        const precioStr = parseFloat(item.precio) || 0;
+                        if (item.asignados.length === 0) {
+                            montoPendienteDeAsignar += precioStr;
+                            itemNombresPendientes.push(item.nombre);
+                        } else {
+                            totalConsumidoAsignado += precioStr;
+                            const division = precioStr / item.asignados.length;
+                            item.asignados.forEach(pid => { if (gastos[pid]) gastos[pid].subtotal += division; });
+                        }
+                    });
+                    
+                    this.alertaSaldoPendiente = montoPendienteDeAsignar > 0;
+                    this.montoPendiente = montoPendienteDeAsignar;
+                    this.nombresPendientes = itemNombresPendientes.join(', ');
+                    
+                    const propinaTotal = totalConsumidoAsignado * (parseFloat(this.propinaPorcentaje) / 100 || 0);
+                    const cargosFijosVal = parseFloat(this.cargosFijos) || 0;
+                    
+                    Object.keys(gastos).forEach(pid => {
+                        const gp = gastos[pid];
+                        if (totalConsumidoAsignado > 0) {
+                            gp.propina = propinaTotal * (gp.subtotal / totalConsumidoAsignado);
+                            gp.fijos = cargosFijosVal * (gp.subtotal / totalConsumidoAsignado);
+                        }
+                        gp.subtotal = this.roundValue(gp.subtotal);
+                        gp.propina = this.roundValue(gp.propina);
+                        gp.fijos = this.roundValue(gp.fijos);
+                        gp.total = gp.subtotal + gp.propina + gp.fijos;
+                        gp.balance = gp.pagado - gp.total; 
+                    });
+                    return gastos;
+                },
+                
+                get transferencias() {
+                    const deudores = [], acreedores = [];
+                    const calc = this.calculos;
+                    
+                    this.personas.forEach(p => {
+                        const bal = calc[p.id]?.balance || 0;
+                        if (bal < -0.01) deudores.push({ nombre: p.nombre, amount: -bal });
+                        else if (bal > 0.01) acreedores.push({ nombre: p.nombre, amount: bal });
+                    });
+                    
+                    deudores.sort((a,b) => b.amount - a.amount);
+                    acreedores.sort((a,b) => b.amount - a.amount);
+                    
+                    const movimientos = [];
+                    let d = 0, a = 0;
+                    
+                    while (d < deudores.length && a < acreedores.length) {
+                        const deudor = deudores[d];
+                        const acreedor = acreedores[a];
+                        const monto = Math.min(deudor.amount, acreedor.amount);
+                        
+                        if (monto > 0.01) {
+                            movimientos.push({ from: deudor.nombre, to: acreedor.nombre, amount: this.roundValue(monto) });
+                        }
+                        
+                        deudor.amount -= monto;
+                        acreedor.amount -= monto;
+                        
+                        if (deudor.amount <= 0.01) d++;
+                        if (acreedor.amount <= 0.01) a++;
+                    }
+                    return movimientos;
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

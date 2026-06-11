@@ -1,0 +1,6 @@
+{
+  "name": "Divisor de Cuentas",
+  "description": "Un divisor de cuentas sin servidor optimizado para móviles que calcula deudas parciales y recargos proporcionales.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
